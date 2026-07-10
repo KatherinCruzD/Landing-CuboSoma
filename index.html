@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CUBO SOMA 3D — Rompecabezas Geométrico</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#04040E;--panel:#0C0C20;--card:#121228;--bd:#ffffff0D;
+  --cV:#FFB700;--cL:#00D9FF;--cT:#00E676;--cZ:#FF8C00;
+  --cA:#3B82F6;--cB:#EF4444;--cP:#A855F7;
+  --fg:#E8E8FF;--mut:#4A4A7A;--acc:#00D9FF;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--fg);overflow-x:hidden}
+canvas#stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+.z1{position:relative;z-index:1}
+.wrap{max-width:1280px;margin:0 auto;padding:0 2rem}
+.divl{width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--acc)33,#A855F755,transparent);position:relative;z-index:1}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:.8rem 2rem;background:rgba(4,4,14,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--bd)}
+.logo{font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:900;letter-spacing:.12em;background:linear-gradient(90deg,var(--acc),#A855F7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-links{display:flex;gap:1.6rem;list-style:none}
+.nav-links a{color:var(--mut);text-decoration:none;font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;transition:color .2s}
+.nav-links a:hover{color:var(--acc)}
+.nav-play{padding:.48rem 1.3rem;border-radius:50px;background:linear-gradient(135deg,#EF4444,#A855F7);color:#fff;font-family:'Orbitron',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.08em;border:none;cursor:pointer;animation:npulse 2s ease-in-out infinite}
+@keyframes npulse{0%,100%{box-shadow:0 0 0 0 #EF444440}50%{box-shadow:0 0 0 8px transparent}}
+
+/* HERO */
+#hero{min-height:100vh;display:flex;align-items:center;justify-content:center;padding-top:5rem;text-align:center}
+.hero-in{display:flex;flex-direction:column;align-items:center;gap:2rem;max-width:900px}
+.hero-badge{font-family:'Orbitron',sans-serif;font-size:.6rem;letter-spacing:.35em;color:var(--acc);padding:.38rem 1.1rem;border:1px solid var(--acc)44;border-radius:50px;background:var(--acc)0D}
+.hero-title{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(4rem,11vw,8.5rem);line-height:.88}
+.t1{display:block;color:var(--fg)}
+.t2{display:block;background:linear-gradient(90deg,#EF4444,#FFB700,#00D9FF,#A855F7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-size:200%;animation:bganim 3s linear infinite}
+@keyframes bganim{0%{background-position:0%}100%{background-position:200%}}
+.hero-sub{color:var(--mut);font-size:1.05rem;max-width:620px;line-height:1.75}
+.hero-sub strong{color:var(--acc)}
+.hero-ctas{display:flex;gap:.9rem;flex-wrap:wrap;justify-content:center}
+.btn-main{padding:.95rem 2.2rem;border-radius:14px;background:linear-gradient(135deg,#EF4444,#A855F7);color:#fff;font-family:'Orbitron',sans-serif;font-size:.8rem;font-weight:700;letter-spacing:.1em;border:none;cursor:pointer;transition:transform .2s;box-shadow:0 0 30px #EF444430}
+.btn-main:hover{transform:translateY(-3px)}
+.btn-out{padding:.95rem 2.2rem;border-radius:14px;background:transparent;color:var(--acc);border:1.5px solid var(--acc);font-family:'Orbitron',sans-serif;font-size:.8rem;font-weight:700;letter-spacing:.1em;cursor:pointer;transition:all .2s}
+.btn-out:hover{background:var(--acc)18}
+.hero-stats{display:flex;gap:2.5rem;justify-content:center;flex-wrap:wrap;padding-top:1.5rem;border-top:1px solid var(--bd);width:100%}
+.hs-n{font-family:'Orbitron',sans-serif;font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,var(--acc),#A855F7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hs-l{font-size:.65rem;color:var(--mut);letter-spacing:.12em;text-transform:uppercase}
+/* Hero animated cube canvas */
+.hero-canvas-wrap{position:relative;display:flex;justify-content:center}
+#heroCanvas{width:260px;height:200px;filter:drop-shadow(0 0 40px rgba(0,217,255,.2))}
+
+/* ══ SECTION COMMON ══ */
+section{padding:5rem 0;position:relative;z-index:1}
+.sec-ey{font-family:'Orbitron',sans-serif;font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;margin-bottom:.6rem}
+.sec-ti{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(1.8rem,3.5vw,2.7rem);line-height:1.05;margin-bottom:.75rem}
+.sec-sub{color:var(--mut);font-size:.9rem;line-height:1.7}
+
+/* ══ PIEZAS — interactive flip cards ══ */
+#piezas{background:radial-gradient(ellipse 80% 50% at 50% 0%,#0A0A22,var(--bg))}
+.pieces-hdr{text-align:center;margin-bottom:2.5rem}
+.pieces-hdr .sec-sub{max-width:580px;margin:0 auto}
+.pg{display:grid;grid-template-columns:repeat(7,1fr);gap:.8rem}
+@media(max-width:1100px){.pg{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:580px){.pg{grid-template-columns:repeat(2,1fr)}}
+/* Flip card */
+.flip-wrap{perspective:900px;height:220px;cursor:pointer}
+.flip-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.4,0,.2,1)}
+.flip-wrap:hover .flip-inner,.flip-wrap.flipped .flip-inner{transform:rotateY(180deg)}
+.flip-front,.flip-back{position:absolute;inset:0;backface-visibility:hidden;border-radius:14px;border:1.5px solid var(--bd);background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem .7rem;text-align:center;transition:border-color .2s}
+.flip-back{transform:rotateY(180deg);background:linear-gradient(135deg,#0e0e2e,#181830);border-color:var(--pcc)}
+.flip-front:hover,.flip-wrap.flipped .flip-back{border-color:var(--pcc)}
+.pc-lid{font-family:'Orbitron',sans-serif;font-size:1.8rem;font-weight:900;color:var(--pcc);opacity:.12;position:absolute;top:.2rem;right:.6rem;line-height:1}
+.pc-nm{font-family:'Orbitron',sans-serif;font-size:.56rem;letter-spacing:.07em;color:var(--pcc);margin-top:.4rem}
+.pc-tipo{font-size:.58rem;color:var(--mut);line-height:1.4;margin-bottom:.3rem}
+.pc-cubos{font-family:'Orbitron',sans-serif;font-size:.7rem;color:var(--pcc);font-weight:700}
+.pc-desc{font-size:.62rem;color:var(--mut);line-height:1.55}
+.flip-hint{font-size:.5rem;color:var(--mut);letter-spacing:.1em;text-transform:uppercase;margin-top:.5rem;opacity:.7}
+
+/* ══ FIGURAS — interactive gallery ══ */
+#figuras{background:radial-gradient(ellipse 70% 50% at 30% 50%,#080820,var(--bg))}
+.fig-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.9rem;margin-top:2rem}
+.fig-card{background:var(--card);border:1.5px solid var(--bd);border-radius:14px;padding:1rem .7rem .8rem;text-align:center;cursor:pointer;transition:all .25s;position:relative}
+.fig-card:hover{border-color:var(--acc);transform:translateY(-5px);box-shadow:0 14px 36px #00D9FF18}
+.fig-card.active-fig{border-color:var(--acc);background:#00D9FF0D;box-shadow:0 0 26px #00D9FF28}
+.fig-card canvas{display:block;margin:0 auto .5rem}
+.fig-nm{font-family:'Orbitron',sans-serif;font-size:.5rem;letter-spacing:.06em;color:var(--acc)}
+.fig-diff{position:absolute;top:.4rem;right:.5rem;font-size:.46rem;font-family:'Orbitron',sans-serif;padding:.12rem .38rem;border-radius:4px;letter-spacing:.05em}
+.df{background:#00E67622;color:#00E676}.dm{background:#FFB70022;color:#FFB700}.dd{background:#EF444422;color:#EF4444}
+
+/* ══ CURIOSIDADES — animated + interactive ══ */
+#curiosidades{background:radial-gradient(ellipse 70% 50% at 80% 50%,#080820,var(--bg))}
+.cur-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-top:2.5rem}
+.cc{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:1.4rem;cursor:pointer;position:relative;overflow:hidden;transition:all .3s}
+.cc:hover{border-color:var(--cx);transform:translateY(-4px);box-shadow:0 12px 36px color-mix(in srgb,var(--cx) 15%,transparent)}
+.cc-num{position:absolute;top:-6px;right:.7rem;font-family:'Orbitron',sans-serif;font-size:4.5rem;font-weight:900;color:var(--cx);opacity:.05;line-height:1}
+.cc-ico{font-size:1.5rem;margin-bottom:.5rem;display:block}
+.cc-ti{font-family:'Orbitron',sans-serif;font-size:.78rem;font-weight:700;color:var(--cx);margin-bottom:.35rem}
+.cc-tx{font-size:.75rem;color:var(--mut);line-height:1.65;max-height:0;overflow:hidden;transition:max-height .4s ease,opacity .3s;opacity:0}
+.cc:hover .cc-tx,.cc.open .cc-tx{max-height:200px;opacity:1}
+.cc-arrow{font-size:.65rem;color:var(--cx);opacity:.5;transition:transform .3s}
+.cc.open .cc-arrow{transform:rotate(180deg)}
+
+/* ══ MATEMÁTICAS — interactive accordion ══ */
+#matematicas{background:radial-gradient(ellipse 60% 80% at 20% 50%,#090F2A,var(--bg))}
+.math-layout{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:2.5rem;align-items:start}
+@media(max-width:768px){.math-layout{grid-template-columns:1fr}}
+.math-formula-box{background:var(--card);border:1px solid var(--cP);border-radius:14px;padding:1.6rem}
+.formula{font-family:'Orbitron',sans-serif;font-size:.82rem;color:var(--acc);margin:.3rem 0;padding:.4rem .65rem;background:var(--panel);border-radius:7px;border-left:3px solid var(--cP)}
+.fl{font-size:.62rem;color:var(--mut);margin:.65rem 0 .12rem}
+/* Accordion */
+.accord-item{background:var(--card);border:1px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:.7rem;cursor:pointer;transition:border-color .25s}
+.accord-item:hover,.accord-item.open{border-color:var(--ai-col)}
+.accord-head{display:flex;align-items:center;gap:.7rem;padding:.9rem 1rem;user-select:none}
+.accord-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
+.accord-tit{font-family:'Orbitron',sans-serif;font-size:.76rem;font-weight:700;flex:1}
+.accord-arr{font-size:.8rem;color:var(--mut);transition:transform .3s}
+.accord-item.open .accord-arr{transform:rotate(180deg)}
+.accord-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+.accord-item.open .accord-body{max-height:300px}
+.accord-content{padding:.1rem 1rem 1rem 1rem;font-size:.74rem;color:var(--mut);line-height:1.65}
+
+/* ══ ESTADÍSTICAS — animated counters ══ */
+#estadisticas{background:radial-gradient(ellipse 80% 60% at 50% 50%,#080820,var(--bg))}
+.stats-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem;margin-top:2.5rem}
+.sc{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:1.4rem;text-align:center;position:relative;overflow:hidden;transition:all .3s;cursor:default}
+.sc:hover{border-color:var(--ss);transform:translateY(-4px)}
+.sc-prog{position:absolute;bottom:0;left:0;height:3px;background:var(--ss);width:0;transition:width 1.5s ease}
+.sc-n{font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:900;color:var(--ss);display:block;line-height:1.1}
+.sc-t{font-family:'Orbitron',sans-serif;font-size:.7rem;font-weight:700;margin:.3rem 0 .2rem}
+.sc-d{font-size:.66rem;color:var(--mut);line-height:1.4}
+
+/* ══ CÓMO JUGAR — step reveal ══ */
+#como{background:var(--bg)}
+.steps-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-top:2.5rem}
+.step{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:1.4rem;transition:all .3s;cursor:pointer;position:relative;overflow:hidden}
+.step.revealed{border-color:var(--stx);background:linear-gradient(135deg,color-mix(in srgb,var(--stx) 6%,var(--card)),var(--card))}
+.step:hover{border-color:var(--stx);transform:translateY(-4px)}
+.step-n{font-family:'Orbitron',sans-serif;font-size:3rem;color:var(--stx);opacity:.08;position:absolute;top:.5rem;right:.8rem;line-height:1}
+.step-ico{font-size:1.4rem;margin-bottom:.55rem;display:block;transition:transform .3s}
+.step.revealed .step-ico{transform:scale(1.15)}
+.step-t{font-family:'Orbitron',sans-serif;font-weight:700;font-size:.76rem;color:var(--stx);margin-bottom:.4rem}
+.step-tx{font-size:.73rem;color:var(--mut);line-height:1.6;max-height:0;overflow:hidden;transition:max-height .4s ease;opacity:0}
+.step.revealed .step-tx{max-height:200px;opacity:1}
+.step-tap{font-size:.55rem;color:var(--mut);opacity:.6;letter-spacing:.1em;text-transform:uppercase;margin-top:.4rem;transition:opacity .3s}
+.step.revealed .step-tap{opacity:0}
+
+/* ══ GAME ══ */
+#juego{padding:3rem 0 5rem}
+.mode-tabs{display:flex;gap:.5rem;margin-bottom:1.2rem}
+.mt{flex:1;padding:.6rem;border-radius:10px;background:var(--panel);border:1.5px solid var(--bd);color:var(--mut);font-family:'Orbitron',sans-serif;font-size:.6rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;text-align:center}
+.mt.act{border-color:var(--acc);color:var(--acc);background:var(--acc)12}
+.gm-lay{display:grid;grid-template-columns:295px 1fr;gap:1.2rem;align-items:start}
+@media(max-width:960px){.gm-lay{grid-template-columns:1fr}}
+
+/* Sidebar */
+.sb{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:1rem;position:sticky;top:82px}
+.sbs{margin-bottom:.9rem;padding-bottom:.9rem;border-bottom:1px solid var(--bd)}
+.sbs:last-child{border:0;margin:0;padding:0}
+.sbl{font-family:'Orbitron',sans-serif;font-size:.52rem;letter-spacing:.18em;text-transform:uppercase;color:var(--mut);margin-bottom:.6rem;display:flex;align-items:center;gap:.3rem}
+.sbl::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--acc)}
+/* Timer */
+.tmr{background:var(--panel);border-radius:11px;padding:.8rem;text-align:center;border:1px solid var(--bd);margin-bottom:.65rem}
+.tmr-n{font-family:'Orbitron',sans-serif;font-size:2.2rem;font-weight:900;color:var(--acc);line-height:1;transition:color .3s}
+.tmr-n.warn{color:#FFB700;animation:tp .5s ease-in-out infinite}
+.tmr-n.danger{color:#EF4444;animation:tp .3s ease-in-out infinite}
+@keyframes tp{0%,100%{opacity:1}50%{opacity:.4}}
+.tmr-bar{background:var(--panel);border-radius:3px;height:4px;overflow:hidden;margin-top:.55rem}
+.tmr-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#00E676,#00D9FF);transition:width .5s linear,background .3s}
+/* Target */
+.tgt{background:var(--panel);border:1px solid var(--acc)33;border-radius:11px;padding:.8rem;text-align:center;margin-bottom:.65rem}
+.tgt-lbl{font-family:'Orbitron',sans-serif;font-size:.5rem;letter-spacing:.15em;color:var(--acc);margin-bottom:.4rem;text-transform:uppercase}
+.tgt-nm{font-family:'Orbitron',sans-serif;font-size:.82rem;font-weight:700;margin-bottom:.2rem}
+.tgt-d{font-size:.6rem;color:var(--mut)}
+/* Palette */
+.pal{display:grid;grid-template-columns:1fr 1fr;gap:.38rem}
+.pp{background:var(--panel);border:2px solid transparent;border-radius:10px;padding:.48rem .32rem;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.pp:hover:not(.done){border-color:var(--pc);transform:scale(1.05)}
+.pp.sel{border-color:var(--pc);background:color-mix(in srgb,var(--pc) 14%,var(--panel))}
+.pp.done{opacity:.28;pointer-events:none}
+.pp canvas{display:block;margin:0 auto 2px}
+.pp-nm{font-family:'Orbitron',sans-serif;font-size:.46rem;letter-spacing:.04em;color:var(--pc)}
+.pp-cnt{position:absolute;top:3px;right:4px;width:13px;height:13px;border-radius:50%;background:var(--pc);font-size:.43rem;display:flex;align-items:center;justify-content:center;color:#000;font-weight:900}
+.pp-chk{position:absolute;top:2px;right:3px;color:#00E676;font-size:.75rem}
+/* Rotation */
+.rot-axes{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-bottom:2px}
+.rat{font-size:.48rem;color:var(--mut);text-align:center;font-family:'Orbitron',sans-serif;letter-spacing:.05em}
+.rot-g{display:grid;grid-template-columns:repeat(3,1fr);gap:.3rem}
+.rb{padding:.42rem .18rem;border-radius:7px;background:var(--panel);border:1px solid var(--bd);color:var(--fg);font-size:.56rem;cursor:pointer;transition:all .18s;font-family:'Orbitron',sans-serif;letter-spacing:.03em}
+.rb:hover{background:var(--acc);color:#000;border-color:var(--acc)}
+/* Controls */
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:.35rem}
+.cb{padding:.45rem;border-radius:7px;background:var(--panel);border:1px solid var(--bd);color:var(--fg);font-size:.63rem;cursor:pointer;transition:all .18s}
+.cb:hover{background:var(--acc);color:#000;border-color:var(--acc)}
+.cb.rd:hover{background:#EF4444;border-color:#EF4444;color:#fff}
+/* Progress */
+.pb-bg{background:var(--panel);border-radius:4px;height:5px;overflow:hidden;margin:.35rem 0}
+.pb-f{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--acc),#A855F7);transition:width .5s ease}
+.pb-m{display:flex;justify-content:space-between;font-size:.58rem;color:var(--mut)}
+.sc-box{background:var(--panel);border-radius:10px;padding:.7rem;text-align:center;margin-top:.5rem}
+.sc-n{font-family:'Orbitron',sans-serif;font-size:1.7rem;font-weight:900;color:var(--cV)}
+.sc-l{font-size:.54rem;color:var(--mut);letter-spacing:.12em;text-transform:uppercase}
+/* Hint */
+.hint{background:linear-gradient(135deg,#00D9FF14,#A855F70E);border:1px solid #00D9FF1E;border-radius:10px;padding:.72rem;font-size:.68rem;color:var(--mut);line-height:1.55;transition:border-color .2s,background .2s}
+.hint.ok{border-color:#00E67655;background:#00E67610;color:#00E676}
+.hint.bad{border-color:#EF444455;background:#EF444410;color:#EF4444}
+.hint strong{color:var(--acc);display:block;font-family:'Orbitron',sans-serif;font-size:.5rem;letter-spacing:.1em;margin-bottom:.25rem}
+/* Viewport */
+.vp{background:var(--card);border:1px solid var(--bd);border-radius:16px;overflow:hidden}
+.vph{display:flex;align-items:center;justify-content:space-between;padding:.72rem 1.2rem;border-bottom:1px solid var(--bd)}
+.vp-ti{font-family:'Orbitron',sans-serif;font-size:.66rem;letter-spacing:.14em;color:var(--cP)}
+.chips{display:flex;gap:.35rem}
+.chip{padding:.2rem .58rem;border-radius:20px;font-size:.54rem;font-family:'Orbitron',sans-serif;letter-spacing:.05em;border:1px solid var(--bd);background:var(--panel)}
+.chip.ok{border-color:var(--cT);color:var(--cT)}.chip.wn{border-color:var(--cV);color:var(--cV)}
+.vp-info{padding:.5rem 1.2rem;border-bottom:1px solid var(--bd);background:var(--panel);display:flex;align-items:center;gap:.8rem;min-height:38px}
+.vpi-lbl{font-family:'Orbitron',sans-serif;font-size:.5rem;letter-spacing:.14em;color:var(--mut);white-space:nowrap}
+.vpi-nm{font-family:'Orbitron',sans-serif;font-size:.78rem;font-weight:700}
+#gc{display:block;width:100%;height:460px;cursor:crosshair;touch-action:none}
+#gc.drag{cursor:grabbing}
+.vpf{padding:.55rem 1.2rem;border-top:1px solid var(--bd);display:flex;flex-wrap:wrap;gap:1rem;font-size:.62rem;color:var(--mut)}
+.vpt span{color:var(--acc)}
+
+/* Overlays */
+.ov{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(4,4,14,.93);backdrop-filter:blur(16px);opacity:0;pointer-events:none;transition:opacity .4s}
+.ov.show{opacity:1;pointer-events:all}
+.ovc{background:var(--card);border-radius:22px;padding:2.4rem;text-align:center;max-width:440px;animation:wp .45s cubic-bezier(.34,1.56,.64,1)}
+@keyframes wp{from{transform:scale(.55)}to{transform:scale(1)}}
+.ov-e{font-size:3rem;display:block;margin-bottom:.5rem}
+.ov-ti{font-family:'Orbitron',sans-serif;font-size:1.5rem;font-weight:900;margin-bottom:.3rem}
+.ov-sub{color:var(--mut);font-size:.8rem;margin-bottom:.9rem}
+.ov-pts{font-family:'Orbitron',sans-serif;font-size:2.3rem;color:var(--cV);margin-bottom:1.3rem}
+.ov-btns{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap}
+/* Fig selector */
+#figSelOv{z-index:400}
+.fig-sel-card{max-width:680px;width:95%;max-height:85vh;overflow-y:auto;border:1px solid var(--acc)}
+
+/* Footer */
+footer{padding:3rem 0 2rem;border-top:1px solid var(--bd);text-align:center;position:relative;z-index:1}
+.ftb{font-family:'Orbitron',sans-serif;font-size:1.5rem;font-weight:900;letter-spacing:.12em;background:linear-gradient(135deg,var(--acc),#A855F7,#EF4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.4rem}
+.fts{color:var(--mut);font-size:.78rem}.ftc{font-size:.6rem;color:#ffffff10;letter-spacing:.15em;text-transform:uppercase;margin-top:.8rem}
+
+@media(max-width:900px){nav{padding:.7rem 1rem}.nav-links{display:none}.wrap{padding:0 1rem}.sb{position:static}.gm-lay{grid-template-columns:1fr}}
+
+/* ══ LEADERBOARD ══ */
+#leaderboard{padding:5rem 0;background:radial-gradient(ellipse 70% 60% at 50% 0%,#0A0A2E,var(--bg))}
+.lb-wrap{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:2.5rem;align-items:start}
+@media(max-width:768px){.lb-wrap{grid-template-columns:1fr}}
+.lb-box{background:var(--card);border:1px solid var(--bd);border-radius:16px;overflow:hidden}
+.lb-head{padding:.9rem 1.2rem;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.lb-title{font-family:'Orbitron',sans-serif;font-size:.72rem;letter-spacing:.14em;color:var(--acc)}
+.lb-clear{font-size:.6rem;color:var(--mut);cursor:pointer;background:none;border:none;font-family:'Orbitron',sans-serif;letter-spacing:.08em;transition:color .2s}
+.lb-clear:hover{color:#EF4444}
+.lb-list{list-style:none;padding:.4rem 0}
+.lb-item{display:flex;align-items:center;gap:.8rem;padding:.6rem 1.2rem;border-bottom:1px solid var(--bd);transition:background .2s}
+.lb-item:last-child{border-bottom:none}
+.lb-item:hover{background:var(--panel)}
+.lb-item.top1{background:linear-gradient(90deg,#FFB70010,transparent)}
+.lb-item.top2{background:linear-gradient(90deg,#C0C0C010,transparent)}
+.lb-item.top3{background:linear-gradient(90deg,#CD7F3210,transparent)}
+.lb-rank{font-family:'Orbitron',sans-serif;font-size:.82rem;font-weight:900;width:28px;text-align:center}
+.lb-rank.r1{color:#FFB700}.lb-rank.r2{color:#C0C0C0}.lb-rank.r3{color:#CD7F32}.lb-rank.rn{color:var(--mut)}
+.lb-medal{font-size:1rem;width:20px;text-align:center}
+.lb-info{flex:1}
+.lb-name{font-family:'Orbitron',sans-serif;font-size:.72rem;font-weight:700;color:var(--fg)}
+.lb-meta{font-size:.6rem;color:var(--mut);margin-top:.1rem}
+.lb-time{font-family:'Orbitron',sans-serif;font-size:.85rem;font-weight:700;color:var(--acc)}
+.lb-empty{padding:2rem;text-align:center;font-size:.75rem;color:var(--mut);font-family:'Orbitron',sans-serif;letter-spacing:.1em}
+/* Name input in win overlay */
+.name-input-wrap{margin-bottom:1rem}
+.name-input{width:100%;padding:.6rem 1rem;border-radius:10px;background:var(--panel);border:1px solid var(--acc)44;color:var(--fg);font-family:'Orbitron',sans-serif;font-size:.82rem;letter-spacing:.08em;outline:none;transition:border-color .2s;text-align:center}
+.name-input:focus{border-color:var(--acc)}
+.name-input::placeholder{color:var(--mut);font-size:.7rem}
+.lb-fig-tabs{display:flex;gap:.4rem;padding:.6rem 1.2rem;flex-wrap:wrap;border-bottom:1px solid var(--bd)}
+.lb-tab{font-size:.54rem;font-family:'Orbitron',sans-serif;letter-spacing:.06em;padding:.22rem .65rem;border-radius:20px;background:var(--panel);border:1px solid var(--bd);color:var(--mut);cursor:pointer;transition:all .2s}
+.lb-tab.act{border-color:var(--acc);color:var(--acc);background:var(--acc)14}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+
+<nav class="z1">
+  <div class="logo">CUBOSOMA</div>
+  <ul class="nav-links">
+    <li><a href="#piezas">7 Piezas</a></li>
+    <li><a href="#figuras">Figuras</a></li>
+    <li><a href="#como">Cómo jugar</a></li>
+    <li><a href="#juego">Jugar</a></li>
+    <li><a href="#curiosidades">Datos</a></li>
+    <li><a href="#leaderboard">🏆 Ranking</a></li>
+  </ul>
+  <button class="nav-play" onclick="go('juego')">▶ JUGAR AHORA</button>
+</nav>
+
+<!-- HERO -->
+<section id="hero" class="z1">
+  <div class="wrap hero-in">
+    <span class="hero-badge">Geometría · Espacio · Lógica 3D · Piet Hein 1936</span>
+    <h1 class="hero-title"><span class="t1">CUBO</span><span class="t2">SOMA</span></h1>
+    <div class="hero-canvas-wrap"><canvas id="heroCanvas" width="260" height="200"></canvas></div>
+    <p class="hero-sub">7 piezas únicas — un triómino y seis tetracubos — <strong>exactamente las formas que suman 27 celdas</strong> y pueden ensamblarse en un cubo perfecto 3×3×3. Rota, encaja, compite.</p>
+    <div class="hero-ctas">
+      <button class="btn-main" onclick="go('juego')">▶ JUGAR AHORA</button>
+      <button class="btn-out" onclick="go('piezas')">Las 7 piezas</button>
+      <button class="btn-out" onclick="go('figuras')">+20 figuras</button>
+    </div>
+    <div class="hero-stats">
+      <div><div class="hs-n">7</div><div class="hs-l">Piezas</div></div>
+      <div><div class="hs-n">27</div><div class="hs-l">Cubos</div></div>
+      <div><div class="hs-n">240</div><div class="hs-l">Soluciones</div></div>
+      <div><div class="hs-n">+20</div><div class="hs-l">Figuras</div></div>
+      <div><div class="hs-n">1936</div><div class="hs-l">Creación</div></div>
+    </div>
+  </div>
+</section>
+<div class="divl z1"></div>
+
+<!-- PIEZAS — flip cards -->
+<section id="piezas" class="z1">
+  <div class="wrap">
+    <div class="pieces-hdr">
+      <p class="sec-ey" style="color:var(--cV);text-align:center">Las 7 piezas del Cubo Soma</p>
+      <h2 class="sec-ti" style="text-align:center">Pasa el mouse para descubrir cada pieza</h2>
+      <p class="sec-sub" style="text-align:center">Son todos los policubos no convexos de 3 y 4 unidades que existen. Juntos suman 27 cubos. Haz hover o clic para ver los detalles.</p>
+    </div>
+    <div class="pg" id="pcGrid"></div>
+  </div>
+</section>
+<div class="divl z1"></div>
+
+<!-- FIGURAS -->
+<section id="figuras" class="z1">
+  <div class="wrap">
+    <p class="sec-ey" style="color:var(--acc)">Galería de figuras</p>
+    <h2 class="sec-ti">+20 figuras para construir</h2>
+    <p class="sec-sub">Haz clic en cualquier figura para jugar con ese objetivo. Con las mismas 7 piezas puedes armar el cubo clásico y muchas otras formas 3D.</p>
+    <div class="fig-grid" id="figGrid"></div>
+  </div>
+</section>
+<div class="divl z1"></div>
+
+<!-- CÓMO JUGAR — step reveal -->
+<section id="como" class="z1">
+  <div class="wrap">
+    <div style="text-align:center;margin-bottom:.5rem">
+      <p class="sec-ey" style="color:var(--cT);text-align:center">Antes de jugar</p>
+      <h2 class="sec-ti" style="text-align:center">Haz clic en cada paso para revelarlo</h2>
+    </div>
+    <div class="steps-g" id="stepsG"></div>
+  </div>
+</section>
+<div class="divl z1"></div>
+
+<!-- JUEGO -->
+<section id="juego" class="z1">
+  <div class="wrap">
+    <p class="sec-ey">Zona de juego</p>
+    <h2 class="sec-ti">Arma la figura</h2>
+    <p class="sec-sub" style="margin-bottom:1.5rem">Elige modo y figura, selecciona una pieza, rótala y haz clic en el cubo para colocarla.</p>
+    <div class="mode-tabs">
+      <button class="mt act" id="mLibre" onclick="setMode('libre')">🎮 Libre (sin tiempo)</button>
+      <button class="mt" id="mReto" onclick="setMode('reto')">🏆 Modo Competencia (cronómetro)</button>
+    </div>
+    <div class="gm-lay">
+      <div class="sb">
+        <!-- Timer / Stopwatch -->
+        <div class="sbs" id="timerSec" style="display:none">
+          <div class="sbl">⏱ Tiempo transcurrido</div>
+          <div class="tmr">
+            <div class="tmr-n" id="tmrN">00:00</div>
+            <div style="font-size:.55rem;color:var(--mut);margin-top:.15rem">Tu tiempo se guarda al completar</div>
+          </div>
+        </div>
+        <!-- Target -->
+        <div class="sbs">
+          <div class="sbl">🎯 Figura objetivo</div>
+          <div class="tgt">
+            <div class="tgt-lbl">Construye esta figura:</div>
+            <div class="tgt-nm" id="tgtNm">Cubo 3×3×3</div>
+            <div class="tgt-d" id="tgtD">⭐⭐⭐ Difícil</div>
+            <canvas id="tgtCanvas" width="110" height="88" style="display:block;margin:.55rem auto 0"></canvas>
+          </div>
+          <button class="cb" style="width:100%;margin-top:.4rem" onclick="document.getElementById('figSelOv').classList.add('show')">🔀 Cambiar figura</button>
+        </div>
+        <!-- Pieces palette -->
+        <div class="sbs">
+          <div class="sbl">① Elige pieza</div>
+          <div class="pal" id="palGrid"></div>
+        </div>
+        <!-- Rotation -->
+        <div class="sbs">
+          <div class="sbl">② Rota la pieza (cada clic = 90°)</div>
+          <div class="rot-axes"><span class="rat">EJE X</span><span class="rat">EJE Y</span><span class="rat">EJE Z</span></div>
+          <div class="rot-g">
+            <button class="rb" id="rXp">↑ X+</button><button class="rb" id="rYp">↑ Y+</button><button class="rb" id="rZp">↑ Z+</button>
+            <button class="rb" id="rXn">↓ X−</button><button class="rb" id="rYn">↓ Y−</button><button class="rb" id="rZn">↓ Z−</button>
+          </div>
+        </div>
+        <!-- Controls -->
+        <div class="sbs">
+          <div class="sbl">③ Controles de vista</div>
+          <div class="cg">
+            <button class="cb" id="bRV">↺ Vista</button>
+            <button class="cb" id="bAR">⟳ Auto</button>
+            <button class="cb rd" id="bCL">🗑 Limpiar</button>
+            <button class="cb" id="bUD">↩ Deshacer</button>
+          </div>
+        </div>
+        <!-- Progress -->
+        <div class="sbs">
+          <div class="sbl">Progreso</div>
+          <div class="pb-bg"><div class="pb-f" id="pbF" style="width:0"></div></div>
+          <div class="pb-m"><span id="pbL">0 / 27</span><span id="pbP">0%</span></div>
+          <div class="sc-box"><div class="sc-n" id="scN">0</div><div class="sc-l">Puntos</div></div>
+        </div>
+        <!-- Hint -->
+        <div class="sbs" style="border:0;padding:0">
+          <div class="hint" id="hint"><strong>💡 GUÍA</strong>Selecciona modo → figura → pieza → rota si hace falta → haz clic en el cubo 3D para colocar.</div>
+        </div>
+      </div>
+
+      <!-- Viewport -->
+      <div>
+        <div class="vp">
+          <div class="vph">
+            <div class="vp-ti">CUBOSOMA 3D BUILDER</div>
+            <div class="chips">
+              <span class="chip wn" id="chipP">7 piezas</span>
+              <span class="chip" id="chipS">En progreso</span>
+              <span class="chip" id="chipM" style="border-color:#A855F7;color:#A855F7">Libre</span>
+            </div>
+          </div>
+          <div class="vp-info">
+            <span class="vpi-lbl">PIEZA →</span>
+            <span class="vpi-nm" id="vpiNm" style="color:var(--mut)">Selecciona una pieza del panel ①</span>
+          </div>
+          <canvas id="gc" width="800" height="460"></canvas>
+          <div class="vpf">
+            <div class="vpt">🖱 <span>Arrastra</span> para rotar vista</div>
+            <div class="vpt">🖱 <span>Rueda</span> para zoom</div>
+            <div class="vpt">✅ <span>Verde</span> = cabe | ❌ <span>Rojo</span> = no cabe</div>
+            <div class="vpt">👆 <span>Clic</span> sobre celda brillante para colocar</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="divl z1"></div>
+
+<!-- CURIOSIDADES — expandable -->
+<section id="curiosidades" class="z1">
+  <div class="wrap">
+    <p class="sec-ey" style="color:var(--acc)">¿Sabías que…?</p>
+    <h2 class="sec-ti">Datos curiosos — haz clic para expandir</h2>
+    <div class="cur-g" id="curG"></div>
+  </div>
+</section>
+<div class="divl z1"></div>
+
+<!-- MATEMÁTICAS — accordion -->
+<section id="matematicas" class="z1">
+  <div class="wrap">
+    <p class="sec-ey" style="color:var(--cP)">Geometría combinatoria</p>
+    <h2 class="sec-ti">La matemática del Soma</h2>
+    <div class="math-layout">
+      <div class="math-formula-box">
+        <p style="font-size:.75rem;color:var(--mut);margin-bottom:1rem">El Soma es un problema de <strong style="color:var(--cP)">cobertura exacta</strong> en geometría discreta.</p>
+        <div class="fl">Volumen del cubo:</div><div class="formula">V = 3³ = 27 cubos unitarios</div>
+        <div class="fl">Suma de piezas:</div><div class="formula">3 + (4 × 6) = 27 ✓</div>
+        <div class="fl">Soluciones sin rotaciones:</div><div class="formula">S = 240</div>
+        <div class="fl">Con rotaciones y reflexiones:</div><div class="formula">240 × 48 = 11,520</div>
+        <p style="font-size:.62rem;color:var(--mut);margin-top:.8rem">★ Conway y Michael Guy — 1961.</p>
+      </div>
+      <div id="accordG"></div>
+    </div>
+  </div>
+</section>
+<div class="divl z1"></div>
+
+<!-- ESTADÍSTICAS — animated -->
+<section id="estadisticas" class="z1">
+  <div class="wrap">
+    <p class="sec-ey" style="color:var(--cT)">Números que asombran</p>
+    <h2 class="sec-ti">Estadísticas del Soma</h2>
+    <div class="stats-g" id="statsG"></div>
+  </div>
+</section>
+<div class="divl z1"></div>
+<!-- LEADERBOARD -->
+<section id="leaderboard" class="z1">
+  <div class="wrap">
+    <p class="sec-ey" style="color:var(--cV)">Modo Competencia</p>
+    <h2 class="sec-ti">🏆 Tabla de Tiempos</h2>
+    <p class="sec-sub">Completa cualquier figura en modo Competencia y tu tiempo queda registrado. ¿Quién es el más rápido?</p>
+    <div class="lb-wrap">
+      <div class="lb-box">
+        <div class="lb-head">
+          <div class="lb-title">🥇 Mejores tiempos</div>
+          <button class="lb-clear" onclick="clearLB()">Borrar tabla</button>
+        </div>
+        <div class="lb-fig-tabs" id="lbTabs"></div>
+        <ul class="lb-list" id="lbList"></ul>
+      </div>
+      <div class="lb-box" style="padding:1.5rem">
+        <div class="lb-title" style="margin-bottom:1rem">📊 Cómo funciona</div>
+        <div style="font-size:.78rem;color:var(--mut);line-height:1.7">
+          <p style="margin-bottom:.7rem">① Activa el <strong style="color:var(--acc)">Modo Competencia</strong> en la zona de juego.</p>
+          <p style="margin-bottom:.7rem">② Elige cualquier figura de la galería.</p>
+          <p style="margin-bottom:.7rem">③ El cronómetro arranca cuando colocas tu primera pieza.</p>
+          <p style="margin-bottom:.7rem">④ Al completar la figura, ingresa tu nombre y tu tiempo queda registrado.</p>
+          <p style="margin-bottom:.7rem">⑤ Comparte el link con amigos y compite por el puesto #1. 🎯</p>
+          <div style="margin-top:1.2rem;padding:1rem;background:var(--panel);border-radius:10px;border:1px solid var(--acc)22">
+            <div style="font-family:'Orbitron',sans-serif;font-size:.62rem;color:var(--acc);margin-bottom:.5rem">💡 CONSEJO</div>
+            <div style="font-size:.72rem;color:var(--mut)">Empieza con figuras Fácil para practicar. El cubo 3×3×3 es la prueba definitiva — los expertos lo resuelven en menos de 60 segundos.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divl z1"></div>
+
+<footer class="z1">
+  <div class="wrap">
+    <div class="ftb">CUBOSOMA</div>
+    <p class="fts">El rompecabezas geométrico 3D más fascinante de la historia matemática</p>
+    <p class="ftc">Tecnólogo en Análisis y Desarrollo de Software · SENA · 2025</p>
+  </div>
+</footer>
+
+<!-- WIN -->
+<div class="ov" id="winOv">
+  <div class="ovc" style="border:1px solid var(--acc)">
+    <span class="ov-e">🏆</span>
+    <div class="ov-ti" style="background:linear-gradient(135deg,var(--acc),#A855F7);-webkit-background-clip:text;-webkit-text-fill-color:transparent">¡FIGURA COMPLETADA!</div>
+    <p class="ov-sub" id="winMsg">¡Excelente trabajo!</p>
+    <div class="ov-pts" id="winPts">0 PTS</div>
+    <div class="ov-pts" id="winTime" style="font-size:1.4rem;color:var(--acc);margin-top:-.8rem;margin-bottom:1rem"></div>
+    <div class="name-input-wrap" id="nameInputWrap" style="display:none">
+      <div style="font-size:.65rem;color:var(--mut);margin-bottom:.4rem;font-family:'Orbitron',sans-serif;letter-spacing:.08em">INGRESA TU NOMBRE PARA EL RANKING</div>
+      <input class="name-input" id="playerName" type="text" maxlength="20" placeholder="Tu nombre o apodo..."/>
+      <button class="btn-main" style="width:100%;margin-top:.6rem" onclick="saveToLB()">💾 GUARDAR EN TABLA</button>
+    </div>
+    <div class="ov-btns" id="winBtns">
+      <button class="btn-main" onclick="resetGame();closeOvs()">JUGAR DE NUEVO</button>
+      <button class="btn-out" onclick="closeOvs();go('figuras')">ELEGIR FIGURA</button>
+      <button class="btn-out" onclick="closeOvs();go('leaderboard')">VER TABLA 🏆</button>
+    </div>
+  </div>
+</div>
+<!-- FAIL -->
+<div class="ov" id="failOv">
+  <div class="ovc" style="border:1px solid #EF4444">
+    <span class="ov-e">⏰</span>
+    <div class="ov-ti" style="color:#EF4444">¡TIEMPO AGOTADO!</div>
+    <p class="ov-sub">No alcanzaste a completar la figura. ¡Inténtalo de nuevo!</p>
+    <div class="ov-pts" id="failPts">0 PTS</div>
+    <div class="ov-btns">
+      <button class="btn-main" onclick="resetGame();closeOvs()">INTENTAR DE NUEVO</button>
+      <button class="btn-out" onclick="closeOvs();go('figuras')">CAMBIAR FIGURA</button>
+    </div>
+  </div>
+</div>
+<!-- FIG SELECTOR -->
+<div class="ov" id="figSelOv" style="z-index:400">
+  <div class="ovc fig-sel-card">
+    <div style="font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:700;color:var(--acc);margin-bottom:1rem">Elige una figura</div>
+    <div class="fig-grid" id="figGridModal" style="gap:.55rem"></div>
+    <button class="btn-out" style="margin-top:1rem;width:100%" onclick="closeOvs()">Cancelar</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ══════════════════════════════════════════════════════════════════
+//  CUBOSOMA — FULL ENGINE  (bugs corregidos + secciones interactivas)
+// ══════════════════════════════════════════════════════════════════
+
+function go(id){document.getElementById(id).scrollIntoView({behavior:'smooth'})}
+function closeOvs(){document.querySelectorAll('.ov').forEach(o=>o.classList.remove('show'))}
+
+// ── STARS ────────────────────────────────────────────────────────
+(function(){
+  const c=document.getElementById('stars'),ctx=c.getContext('2d');
+  let W,H,st=[];
+  function rsz(){W=c.width=innerWidth;H=c.height=innerHeight}
+  function ini(){st=[];for(let i=0;i<200;i++)st.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.1+.2,o:Math.random()*.5+.1,d:Math.random()*.025+.006})}
+  function drw(){ctx.clearRect(0,0,W,H);st.forEach(s=>{s.o+=(Math.random()-.5)*s.d;s.o=Math.max(.05,Math.min(.6,s.o));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`hsla(${200+Math.random()*90},75%,78%,${s.o})`;ctx.fill()});requestAnimationFrame(drw)}
+  rsz();ini();drw();window.addEventListener('resize',()=>{rsz();ini()});
+})();
+
+// ── 3D MATH ──────────────────────────────────────────────────────
+const M={
+  rx(a){const c=Math.cos(a),s=Math.sin(a);return[[1,0,0],[0,c,-s],[0,s,c]]},
+  ry(a){const c=Math.cos(a),s=Math.sin(a);return[[c,0,s],[0,1,0],[-s,0,c]]},
+  mv(m,v){return[m[0][0]*v[0]+m[0][1]*v[1]+m[0][2]*v[2],m[1][0]*v[0]+m[1][1]*v[1]+m[1][2]*v[2],m[2][0]*v[0]+m[2][1]*v[1]+m[2][2]*v[2]]},
+  pr(v,fov,cx,cy){const z=v[2]+fov,s=fov/Math.max(z,.01);return[cx+v[0]*s,cy+v[1]*s,z]}
+};
+
+function rotCells(cells,axis,dir){
+  const d=dir>0?1:-1;
+  return cells.map(([x,y,z])=>{
+    if(axis==='x')return[x,-d*z,d*y];
+    if(axis==='y')return[d*z,y,-d*x];
+    return[-d*y,d*x,z];
+  });
+}
+function normCells(c){
+  const mx=Math.min(...c.map(v=>v[0])),my=Math.min(...c.map(v=>v[1])),mz=Math.min(...c.map(v=>v[2]));
+  return c.map(([x,y,z])=>[x-mx,y-my,z-mz]);
+}
+
+// ── 7 PIEZAS SOMA (CORRECTAS) ────────────────────────────────────
+const PDEFS=[
+  {id:'V',nm:'V — Triómino L',   color:'#FFB700',cells:[[0,0,0],[1,0,0],[0,1,0]],            cubos:3,tipo:'Triómino plano en L',
+   desc:'El único triómino del Soma. 3 cubos en ángulo recto. Es indispensable: sin él es imposible completar el cubo.'},
+  {id:'L',nm:'L — Tetrómino L',  color:'#00D9FF',cells:[[0,0,0],[0,1,0],[0,2,0],[1,2,0]],    cubos:4,tipo:'Tetrómino plano en L',
+   desc:'Columna de 3 cubos con uno añadido en la base hacia un lado. Es el tetrómino en L clásico, en un plano.'},
+  {id:'T',nm:'T — Tetrómino T',  color:'#00E676',cells:[[0,0,0],[1,0,0],[2,0,0],[1,1,0]],    cubos:4,tipo:'Tetrómino plano en T',
+   desc:'Fila de 3 con uno bajo el centro. Siempre ocupa 2 esquinas del cubo grande — dato clave para resolverlo.'},
+  {id:'Z',nm:'Z — Tetrómino Z',  color:'#FF8C00',cells:[[0,0,0],[1,0,0],[1,1,0],[2,1,0]],    cubos:4,tipo:'Tetrómino plano en Z/S',
+   desc:'Forma escalonada en Z. También llamada S según su orientación. Completamente plana, sin profundidad propia.'},
+  {id:'A',nm:'A — Helicoidal D', color:'#3B82F6',cells:[[0,0,0],[1,0,0],[1,1,0],[1,1,1]],    cubos:4,tipo:'3D helicoidal dextrógiro',
+   desc:'Sale del plano: el cubo extra surge hacia una nueva capa. Quiral — su espejo exacto es la pieza B.'},
+  {id:'B',nm:'B — Helicoidal L', color:'#EF4444',cells:[[0,0,0],[0,1,0],[1,1,0],[0,0,1]],    cubos:4,tipo:'3D helicoidal levógiro',
+   desc:'Imagen especular de la pieza A. Ninguna rotación puede convertirla en A. Son las únicas dos piezas quirales del Soma.'},
+  {id:'P',nm:'P — Trípode 3D',   color:'#A855F7',cells:[[1,0,0],[0,0,0],[0,1,0],[0,0,1]],    cubos:4,tipo:'3D en trípode',
+   desc:'Un cubo central con tres brazos en ejes X, Y y Z distintos. La única pieza 3D que no es quiral.'}
+];
+
+// ── COLOR UTILS ───────────────────────────────────────────────────
+function hx(h){try{const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return[r,g,b]}catch{return[128,128,128]}}
+function lc(h,a){const[r,g,b]=hx(h);return`rgb(${Math.min(255,r+a)},${Math.min(255,g+a)},${Math.min(255,b+a)})`}
+function dc(h,a){const[r,g,b]=hx(h);return`rgb(${Math.max(0,r-a)},${Math.max(0,g-a)},${Math.max(0,b-a)})`}
+
+// ── DRAW ISO BLOCK ─────────────────────────────────────────────────
+function drawBlk(ctx,px,py,sz,col,alpha,ghost){
+  if(sz<2)return;
+  const h=sz*.52,w=sz*.48,q=sz*.26;
+  ctx.globalAlpha=alpha??1;
+  if(ghost){ctx.shadowColor=col;ctx.shadowBlur=12}
+  // Top face
+  ctx.beginPath();ctx.moveTo(px,py-h);ctx.lineTo(px+w,py-h+q*.9);ctx.lineTo(px,py-h+q*2);ctx.lineTo(px-w,py-h+q*.9);ctx.closePath();
+  ctx.fillStyle=ghost?lc(col,80):lc(col,62);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.16)';ctx.lineWidth=.7;ctx.stroke();
+  ctx.shadowBlur=0;
+  // Right face
+  ctx.beginPath();ctx.moveTo(px,py-h+q*2);ctx.lineTo(px+w,py-h+q*.9);ctx.lineTo(px+w,py+q*.9);ctx.lineTo(px,py+h);ctx.closePath();
+  ctx.fillStyle=ghost?col:col;ctx.fill();ctx.strokeStyle='rgba(0,0,0,.14)';ctx.stroke();
+  // Left face
+  ctx.beginPath();ctx.moveTo(px,py-h+q*2);ctx.lineTo(px-w,py-h+q*.9);ctx.lineTo(px-w,py+q*.9);ctx.lineTo(px,py+h);ctx.closePath();
+  ctx.fillStyle=ghost?dc(col,30):dc(col,52);ctx.fill();ctx.stroke();
+  ctx.globalAlpha=1;
+}
+
+// ── PIECE SMALL PREVIEW ──────────────────────────────────────────
+function drawPieceSmall(canvas,pdef,sz){
+  sz=sz||14;
+  const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);
+  const cells=pdef.currentCells||pdef.cells;
+  const mX=M.rx(.52),mY=M.ry(.5);
+  const cx2=cells.reduce((s,c)=>s+c[0],0)/cells.length;
+  const cy2=cells.reduce((s,c)=>s+c[1],0)/cells.length;
+  const cz2=cells.reduce((s,c)=>s+c[2],0)/cells.length;
+  const FOV=82,CX=canvas.width/2,CY=canvas.height/2;
+  const vx=cells.map(([x,y,z])=>{
+    const wx=(x-cx2)*sz,wy=(y-cy2)*sz,wz=(z-cz2)*sz;
+    let p=M.mv(mY,[wx,wy,wz]);p=M.mv(mX,p);
+    const[px,py,pz]=M.pr(p,FOV,CX,CY);return{px,py,pz};
+  });
+  vx.sort((a,b)=>b.pz-a.pz);
+  vx.forEach(v=>drawBlk(ctx,v.px,v.py,sz*.82,pdef.color,1,false));
+}
+
+// ── PIECES SECTION — flip cards ──────────────────────────────────
+(function(){
+  const g=document.getElementById('pcGrid');
+  PDEFS.forEach((p,i)=>{
+    const wrap=document.createElement('div');wrap.className='flip-wrap';
+    wrap.addEventListener('click',()=>wrap.classList.toggle('flipped'));
+    const inner=document.createElement('div');inner.className='flip-inner';
+    const front=document.createElement('div');front.className='flip-front';front.style.setProperty('--pcc',p.color);
+    const cv=document.createElement('canvas');cv.width=90;cv.height=74;
+    const nm=document.createElement('div');nm.className='pc-nm';nm.textContent='Pieza '+p.id;
+    const hint=document.createElement('div');hint.className='flip-hint';hint.textContent='hover / clic para detalles';
+    const lid=document.createElement('div');lid.className='pc-lid';lid.textContent=p.id;
+    front.appendChild(lid);front.appendChild(cv);front.appendChild(nm);front.appendChild(hint);
+    const back=document.createElement('div');back.className='flip-back';back.style.setProperty('--pcc',p.color);
+    back.innerHTML=`<div class="pc-lid">${p.id}</div>
+      <div class="pc-cubos" style="color:${p.color}">${p.id} — ${p.cubos} cubos</div>
+      <div class="pc-tipo" style="color:${p.color};opacity:.7;margin:.2rem 0">${p.tipo}</div>
+      <div class="pc-desc">${p.desc}</div>`;
+    inner.appendChild(front);inner.appendChild(back);wrap.appendChild(inner);g.appendChild(wrap);
+    requestAnimationFrame(()=>drawPieceSmall(cv,p,14));
+  });
+})();
+
+// ── FIGURES ──────────────────────────────────────────────────────
+const FIGS=[
+  {id:'cubo',nm:'Cubo 3×3×3',diff:'d',
+   cells:(()=>{const c=[];for(let x=0;x<3;x++)for(let y=0;y<3;y++)for(let z=0;z<3;z++)c.push([x,y,z]);return c})()},
+  {id:'torre',nm:'Torre',diff:'f',
+   cells:[[0,0,0],[1,0,0],[2,0,0],[0,1,0],[1,1,0],[2,1,0],[1,2,0],[1,3,0],[1,4,0]]},
+  {id:'escalera',nm:'Escalera',diff:'f',
+   cells:[[0,0,0],[1,0,0],[2,0,0],[1,1,0],[2,1,0],[2,2,0],[0,0,1],[1,0,1],[1,1,1],[2,0,1],[2,1,1],[2,2,1]]},
+  {id:'piramide',nm:'Pirámide',diff:'m',
+   cells:[[0,0,0],[1,0,0],[2,0,0],[3,0,0],[0,0,1],[1,0,1],[2,0,1],[3,0,1],[1,1,0],[2,1,0],[1,1,1],[2,1,1],[1,2,0],[1,2,1]]},
+  {id:'sillon',nm:'Sillón',diff:'m',
+   cells:[[0,0,0],[1,0,0],[2,0,0],[0,1,0],[2,1,0],[0,2,0],[1,2,0],[2,2,0],[0,0,1],[1,0,1],[2,0,1]]},
+  {id:'cruz',nm:'Cruz plana',diff:'f',
+   cells:[[1,0,0],[0,1,0],[1,1,0],[2,1,0],[1,2,0],[1,0,1],[0,1,1],[1,1,1],[2,1,1],[1,2,1]]},
+  {id:'L3d',nm:'L Gigante',diff:'f',
+   cells:[[0,0,0],[0,1,0],[0,2,0],[0,3,0],[1,3,0],[2,3,0],[0,0,1],[0,1,1],[0,2,1],[0,3,1]]},
+  {id:'muro',nm:'Muro',diff:'f',
+   cells:(()=>{const c=[];for(let x=0;x<4;x++)for(let y=0;y<3;y++)c.push([x,y,0]);return c})()},
+  {id:'castillo',nm:'Castillo',diff:'d',
+   cells:[[0,0,0],[1,0,0],[2,0,0],[0,1,0],[2,1,0],[0,2,0],[1,2,0],[2,2,0],[0,3,0],[2,3,0],[0,0,1],[2,0,1],[1,1,1],[0,2,1],[2,2,1],[0,3,1],[2,3,1]]},
+  {id:'barco',nm:'Barco',diff:'m',
+   cells:[[0,0,0],[1,0,0],[2,0,0],[3,0,0],[0,1,0],[0,0,1],[1,0,1],[2,0,1],[3,0,1],[1,2,0]]},
+  {id:'puente',nm:'Puente',diff:'m',
+   cells:[[0,0,0],[1,0,0],[2,0,0],[3,0,0],[0,1,0],[3,1,0],[0,0,1],[3,0,1],[0,1,1],[3,1,1],[1,2,0],[2,2,0],[1,2,1],[2,2,1]]},
+  {id:'donut',nm:'Marco',diff:'m',
+   cells:[[0,0,0],[1,0,0],[2,0,0],[0,1,0],[2,1,0],[0,2,0],[1,2,0],[2,2,0],[0,0,1],[1,0,1],[2,0,1],[0,1,1],[2,1,1],[0,2,1],[1,2,1],[2,2,1]]},
+  {id:'zig',nm:'Zigzag',diff:'m',
+   cells:[[0,0,0],[1,0,0],[1,1,0],[2,1,0],[2,2,0],[0,0,1],[1,0,1],[1,1,1],[2,1,1],[2,2,1]]},
+  {id:'tren',nm:'Tren',diff:'f',
+   cells:[[0,0,0],[1,0,0],[2,0,0],[3,0,0],[0,1,0],[3,1,0],[0,2,0],[1,2,0],[2,2,0],[3,2,0],[1,0,1],[2,0,1]]},
+  {id:'avion',nm:'Avión',diff:'m',
+   cells:[[0,1,0],[1,1,0],[2,1,0],[3,1,0],[1,0,0],[1,2,0],[1,3,0],[2,1,1],[2,0,1],[2,2,1]]},
+  {id:'cohete',nm:'Cohete',diff:'d',
+   cells:[[1,0,0],[0,1,0],[1,1,0],[2,1,0],[1,2,0],[1,3,0],[1,4,0],[0,4,0],[2,4,0],[1,0,1],[0,1,1],[1,1,1],[2,1,1],[1,2,1]]},
+  {id:'sofa',nm:'Sofá',diff:'m',
+   cells:[[0,0,0],[1,0,0],[2,0,0],[0,1,0],[1,1,0],[2,1,0],[0,2,0],[2,2,0],[0,0,1],[1,0,1],[2,0,1],[0,1,1],[2,1,1]]},
+  {id:'letra_L',nm:'Letra L',diff:'f',
+   cells:[[0,0,0],[0,1,0],[0,2,0],[0,3,0],[1,3,0],[2,3,0],[0,0,1],[0,1,1],[0,2,1],[0,3,1],[1,3,1],[2,3,1]]},
+  {id:'batman',nm:'Murciélago',diff:'d',
+   cells:[[0,1,0],[1,0,0],[2,0,0],[3,1,0],[1,2,0],[2,2,0],[1,1,0],[2,1,0],[0,0,1],[3,0,1],[1,1,1],[2,1,1]]},
+  {id:'villa',nm:'Villa',diff:'d',
+   cells:[[0,0,0],[1,0,0],[2,0,0],[0,1,0],[1,1,0],[2,1,0],[0,2,0],[1,2,0],[2,2,0],[1,3,0],[0,0,1],[1,0,1],[2,0,1],[0,1,1],[2,1,1],[1,2,1]]}
+];
+
+let curFig=FIGS[0];
+
+function drawFigPrev(canvas,fig,sz){
+  sz=sz||9;
+  const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);
+  const cells=fig.cells;
+  const mX=M.rx(.5),mY=M.ry(.5);
+  const cxf=cells.reduce((s,c)=>s+c[0],0)/cells.length;
+  const cyf=cells.reduce((s,c)=>s+c[1],0)/cells.length;
+  const czf=cells.reduce((s,c)=>s+c[2],0)/cells.length;
+  const FOV=60,CX=canvas.width/2,CY=canvas.height/2;
+  const vx=cells.map(([x,y,z])=>{
+    const wx=(x-cxf)*sz,wy=(y-cyf)*sz,wz=(z-czf)*sz;
+    let p=M.mv(mY,[wx,wy,wz]);p=M.mv(mX,p);
+    const[px,py,pz]=M.pr(p,FOV,CX,CY);return{px,py,pz};
+  });
+  vx.sort((a,b)=>b.pz-a.pz);
+  const cols=['#FFB700','#00D9FF','#00E676','#FF8C00','#3B82F6','#EF4444','#A855F7'];
+  vx.forEach((v,i)=>drawBlk(ctx,v.px,v.py,sz*.78,cols[i%7],.88,false));
+}
+
+function buildFigGrid(id,cb){
+  const el=document.getElementById(id);el.innerHTML='';
+  FIGS.forEach(fig=>{
+    const card=document.createElement('div');card.className='fig-card';
+    const dcls={f:'df Fácil',m:'dm Medio',d:'dd Difícil'};
+    const[cls,dtxt]=dcls[fig.diff].split(' ');
+    card.innerHTML=`<span class="fig-diff ${cls}">${dtxt}</span><canvas width="100" height="80"></canvas><div class="fig-nm">${fig.nm}</div>`;
+    card.addEventListener('click',()=>cb(fig,card));
+    el.appendChild(card);
+    drawFigPrev(card.querySelector('canvas'),fig,8);
+  });
+}
+buildFigGrid('figGrid',(fig)=>{setFigure(fig);go('juego')});
+buildFigGrid('figGridModal',(fig)=>{setFigure(fig);closeOvs()});
+
+function updFigActive(){
+  document.querySelectorAll('.fig-card').forEach(c=>c.classList.remove('active-fig'));
+  document.querySelectorAll(`#figGrid .fig-card, #figGridModal .fig-card`).forEach((c,i)=>{
+    if(FIGS[i]&&FIGS[i].id===curFig.id)c.classList.add('active-fig');
+  });
+}
+
+function setFigure(fig){
+  curFig=fig;
+  document.getElementById('tgtNm').textContent=fig.nm;
+  const dt={f:'⭐ Fácil',m:'⭐⭐ Medio',d:'⭐⭐⭐ Difícil'};
+  document.getElementById('tgtD').textContent=dt[fig.diff];
+  drawFigPrev(document.getElementById('tgtCanvas'),fig,9);
+  updFigActive();
+  resetGame();
+  setHint(`Figura "${fig.nm}" seleccionada. Elige una pieza y colócala en el área iluminada.`);
+}
+
+// ── HERO CANVAS ───────────────────────────────────────────────────
+(function(){
+  const cv=document.getElementById('heroCanvas');
+  const ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height;
+  let t=0;
+  const COLS=['#FFB700','#00D9FF','#00E676','#FF8C00','#3B82F6','#EF4444','#A855F7','#00D9FF','#FFB700'];
+  function fr(){
+    ctx.clearRect(0,0,W,H);t+=.007;
+    const aY=.4+Math.sin(t)*.28,aX=.3+Math.cos(t*.65)*.12;
+    const S=36,FOV=300,CX=W/2,CY=H/2+5;
+    const mY=M.ry(aY),mX=M.rx(aX);
+    const v=[];let ci=0;
+    for(let x=0;x<3;x++)for(let y=0;y<3;y++)for(let z=0;z<3;z++){
+      const wx=(x-1)*S,wy=(y-1)*S,wz=(z-1)*S;
+      let p=M.mv(mY,[wx,wy,wz]);p=M.mv(mX,p);
+      const[px,py,pz]=M.pr(p,FOV,CX,CY);
+      const sc=FOV/Math.max(pz,.01);
+      v.push({px,py,pz,sc,col:COLS[ci%COLS.length]});ci++;
+    }
+    v.sort((a,b)=>b.pz-a.pz);
+    v.forEach(p=>{const s=S*p.sc/FOV*18+14;drawBlk(ctx,p.px,p.py,s,p.col,1,false)});
+    requestAnimationFrame(fr);
+  }
+  fr();
+})();
+
+// ── HOW TO PLAY — step cards ─────────────────────────────────────
+document.getElementById('stepsG').innerHTML=[
+  {i:'🎯',t:'Elige la figura',x:'En la galería de figuras o con "Cambiar figura" del panel lateral. El objetivo aparece con su preview 3D.',c:'#00D9FF'},
+  {i:'⏱',t:'Elige el modo',x:'"Libre" para practicar sin presión. "Reto" activa un temporizador de 3 minutos: terminar antes da puntos bonus.',c:'#A855F7'},
+  {i:'🧩',t:'Selecciona una pieza',x:'Haz clic en una de las 7 piezas del panel lateral ①. Se resalta en su color característico.',c:'#FFB700'},
+  {i:'🔄',t:'Rota la pieza',x:'Usa los 6 botones de rotación ② (X, Y, Z en ±90°). La miniatura en la paleta se actualiza en tiempo real.',c:'#EF4444'},
+  {i:'👆',t:'Coloca en el cubo',x:'Mueve el mouse sobre las celdas brillantes de la figura. Verde = cabe ✅, Rojo = no cabe ❌. Haz clic para confirmar.',c:'#00E676'},
+  {i:'🏆',t:'¡Completa la figura!',x:'Llena todas las celdas de la figura objetivo usando las 7 piezas. En modo reto, hazlo lo más rápido posible.',c:'#3B82F6'},
+].map((s,i)=>`<div class="step" style="--stx:${s.c}" onclick="this.classList.toggle('revealed')">
+  <div class="step-n">${i+1}</div>
+  <span class="step-ico">${s.i}</span>
+  <div class="step-t">${s.t}</div>
+  <div class="step-tx">${s.x}</div>
+  <div class="step-tap">Toca para revelar</div>
+</div>`).join('');
+
+// ── CURIOSIDADES ──────────────────────────────────────────────────
+document.getElementById('curG').innerHTML=[
+  {i:'🧠',t:'Creado por distracción',x:'Piet Hein concibió el Soma en 1936 mientras escuchaba una conferencia de Heisenberg sobre mecánica cuántica, en vez de tomar notas.',c:'#00D9FF'},
+  {i:'♾️',t:'240 soluciones esenciales',x:'Contando solo orientaciones distintas del cubo final. Incluyendo rotaciones y reflexiones: 11.520 soluciones totales.',c:'#A855F7'},
+  {i:'🖥️',t:'Conway lo contó en 1961',x:'John Conway y Michael Guy usaron una de las primeras computadoras del mundo para contar exhaustivamente las soluciones.',c:'#EF4444'},
+  {i:'📰',t:'Gardner lo popularizó',x:'La columna de Martin Gardner en Scientific American (1958) lo hizo mundialmente famoso de la noche a la mañana.',c:'#FFB700'},
+  {i:'🪞',t:'A y B: el misterio quiral',x:'Las piezas A y B son imágenes especulares que NO pueden superponerse en 3D, como guantes. Son la única pareja quiral del set.',c:'#00E676'},
+  {i:'🏗️',t:'+1000 figuras posibles',x:'El cubo 3×3×3 es solo el inicio. Con las mismas 7 piezas se pueden construir más de 1000 figuras: sillones, torres, animales...',c:'#3B82F6'},
+  {i:'🧩',t:'Todos los policubos no convexos',x:'Las 7 piezas son exactamente TODOS los policubos no convexos de 3 y 4 unidades que existen en geometría 3D. No puede haber ni uno más ni uno menos.',c:'#FF8C00'},
+  {i:'📐',t:'Sin la V, imposible',x:'El triómino V es la única pieza de 3 cubos. Sin ella quedan solo 24 de las 27 celdas cubiertas, haciendo imposible el rompecabezas.',c:'#A855F7'},
+].map((c,i)=>`<div class="cc" data-n="${i+1}" style="--cx:${c.c}" onclick="this.classList.toggle('open')">
+  <div class="cc-num">${i+1}</div>
+  <span class="cc-ico">${c.i}</span>
+  <div class="cc-ti">${c.t} <span class="cc-arrow">▼</span></div>
+  <div class="cc-tx">${c.x}</div>
+</div>`).join('');
+
+// ── MATEMÁTICAS — accordion ───────────────────────────────────────
+document.getElementById('accordG').innerHTML=[
+  {i:'🔢',bg:'#A855F720',col:'#A855F7',t:'Policubos no convexos',x:'Las 7 piezas son TODOS los policubos no convexos de ≤4 cubos que existen en geometría 3D. Es una partición matemáticamente única.'},
+  {i:'📦',bg:'#00D9FF20',col:'#00D9FF',t:'Cobertura exacta',x:'Cada celda del cubo se llena exactamente una vez. Sin solapamientos y sin huecos — un problema de combinatoria pura.'},
+  {i:'🔄',bg:'#FFB70020',col:'#FFB700',t:'Grupo de simetría Oh',x:'El cubo 3D tiene 24 rotaciones y 24 reflexiones (grupo Oh, orden 48). Por eso: 240 × 48 = 11.520 soluciones totales.'},
+  {i:'🪞',bg:'#EF444420',col:'#EF4444',t:'Quiralidad en 3D',x:'Las piezas A y B son quirales: existen en dos versiones especulares que no pueden transformarse una en la otra mediante ninguna rotación en el espacio 3D.'},
+].map((a,i)=>`<div class="accord-item" style="--ai-col:${a.col}" onclick="this.classList.toggle('open')">
+  <div class="accord-head">
+    <div class="accord-ico" style="background:${a.bg}">${a.i}</div>
+    <div class="accord-tit" style="color:${a.col}">${a.t}</div>
+    <span class="accord-arr">▼</span>
+  </div>
+  <div class="accord-body"><div class="accord-content">${a.x}</div></div>
+</div>`).join('');
+
+// ── ESTADÍSTICAS — animated counters ─────────────────────────────
+const STATS=[
+  {n:'11.520',t:'Soluciones totales',d:'Con rotaciones y reflexiones del cubo final.',c:'#00D9FF'},
+  {n:'240',t:'Soluciones esenciales',d:'Sin duplicados de orientación.',c:'#A855F7'},
+  {n:'1936',t:'Año de invención',d:'Piet Hein, conferencia de Heisenberg.',c:'#FFB700'},
+  {n:'27',t:'Cubos unitarios',d:'3 + (4×6) = 27 exactos.',c:'#EF4444'},
+  {n:'7',t:'Piezas únicas',d:'Todos los policubos no convexos ≤4.',c:'#00E676'},
+  {n:'+20',t:'Figuras distintas',d:'Sillones, torres, animales y más.',c:'#3B82F6'},
+  {n:'48',t:'Simetrías del cubo',d:'24 rotaciones + 24 reflexiones.',c:'#FF8C00'},
+  {n:'<60s',t:'Récord de experto',d:'Los mejores resuelven el cubo en <1 min.',c:'#A855F7'},
+];
+document.getElementById('statsG').innerHTML=STATS.map(s=>`
+  <div class="sc" style="--ss:${s.c}" onmouseenter="this.querySelector('.sc-prog').style.width='100%'" onmouseleave="this.querySelector('.sc-prog').style.width='0'">
+    <div class="sc-prog"></div>
+    <span class="sc-n">${s.n}</span>
+    <div class="sc-t">${s.t}</div>
+    <div class="sc-d">${s.d}</div>
+  </div>`).join('');
+
+// ══════════════════════════════════════════════════════════════════
+//  GAME ENGINE — bugs corregidos
+// ══════════════════════════════════════════════════════════════════
+let gameMode='libre';
+
+function setMode(mode){
+  gameMode=mode;
+  document.getElementById('mLibre').classList.toggle('act',mode==='libre');
+  document.getElementById('mReto').classList.toggle('act',mode==='reto');
+  document.getElementById('timerSec').style.display=mode==='reto'?'block':'none';
+  document.getElementById('chipM').textContent=mode==='libre'?'Libre':'🏆 Competencia';
+  resetGame();
+}
+
+const Game=(function(){
+  const cv=document.getElementById('gc');
+  const ctx=cv.getContext('2d');
+  let W,H;
+
+  // Camera
+  let camX=.44,camY=-.52,camZ=1;
+  // BUG FIX: threshold para drag aumentado a 8px y usar 'click' event
+  let isDrag=false,lmx=0,lmy=0,dragDist=0,mouseDown=false;
+  let autoRot=false;
+
+  // State
+  const GS=5; // Grid size 5x5x5 para soportar figuras más grandes
+  let grid=[],placed=[],score=0,history=[];
+  let selIdx=-1;
+
+  // Timer
+  let tmrInt=null,tmrSecs=180,tmrTotal=180;
+
+  const inv=PDEFS.map(p=>({...p,currentCells:p.cells.map(c=>[...c]),placed:false}));
+
+  function initGrid(){
+    grid=[];placed=[];
+    for(let x=0;x<GS;x++){grid[x]=[];for(let y=0;y<GS;y++){grid[x][y]=[];for(let z=0;z<GS;z++)grid[x][y][z]=null}}
+  }
+
+  function resize(){W=cv.width=cv.parentElement?.clientWidth||760;H=cv.height=460}
+
+  // ── Stopwatch (counts UP) ────────────────────────────────────
+  let stopwatchSecs=0,stopwatchRunning=false;
+
+  function startTmr(){
+    stopTmr();stopwatchSecs=0;stopwatchRunning=true;updTmr();
+    tmrInt=setInterval(()=>{
+      if(!stopwatchRunning)return;
+      stopwatchSecs++;updTmr();
+    },1000);
+  }
+  function stopTmr(){clearInterval(tmrInt);tmrInt=null;stopwatchRunning=false}
+  function updTmr(){
+    const m=Math.floor(stopwatchSecs/60),s=stopwatchSecs%60;
+    const el=document.getElementById('tmrN');
+    el.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    el.className='tmr-n'+(stopwatchSecs>=300?' danger':stopwatchSecs>=120?' warn':'');
+  }
+  // fmtTime is global
+
+  // ── Select ───────────────────────────────────────────────────
+  function selPc(i){
+    if(inv[i].placed)return;
+    selIdx=i;updPal();updPrev();
+    setHint(`Pieza "${inv[i].nm}" lista. Rótala con ② si hace falta, luego haz clic en el cubo.`);
+  }
+
+  // ── Rotate ───────────────────────────────────────────────────
+  function rotPc(axis,dir){
+    if(selIdx<0){setHint('Selecciona primero una pieza del panel ①.');return}
+    inv[selIdx].currentCells=normCells(rotCells(inv[selIdx].currentCells,axis,dir));
+    updPal();updPrev();
+    setHint(`Pieza "${inv[selIdx].nm}" rotada. Colócala en el cubo.`);
+  }
+
+  // ── Get figure target set ────────────────────────────────────
+  function getTset(){return new Set(curFig.cells.map(([x,y,z])=>`${x},${y},${z}`))}
+
+  // ── Get figure center for projection ─────────────────────────
+  function getFigCenter(){
+    const cs=curFig.cells;
+    return{
+      cx:cs.reduce((s,c)=>s+c[0],0)/cs.length,
+      cy:cs.reduce((s,c)=>s+c[1],0)/cs.length,
+      cz:cs.reduce((s,c)=>s+c[2],0)/cs.length
+    };
+  }
+
+  // ── Project a grid point to screen (DYNAMIC centering) ───────
+  function projCell(gx,gy,gz){
+    const {cx,cy,cz}=getFigCenter();
+    const S=CELL;
+    const wx=(gx-cx)*S,wy=(gy-cy)*S,wz=(gz-cz)*S;
+    let v=M.mv(M.ry(camY),[wx,wy,wz]);v=M.mv(M.rx(camX),v);
+    const FOV=420*camZ,z=v[2]+FOV,sc=FOV/Math.max(z,.01);
+    return[W/2+v[0]*sc,H/2+v[1]*sc,z,sc];
+  }
+
+  const CELL=48;
+
+  // ── Ghost preview ────────────────────────────────────────────
+  let hovCell=null;
+
+  function getGhost(){
+    if(selIdx<0||!hovCell)return null;
+    const p=inv[selIdx];if(p.placed)return null;
+    const tset=getTset();
+    const cells=p.currentCells.map(([dx,dy,dz])=>[hovCell.x+dx,hovCell.y+dy,hovCell.z+dz]);
+    let valid=true;
+    for(const[x,y,z]of cells){
+      if(!tset.has(`${x},${y},${z}`)){valid=false;break}
+      if(grid[x]?.[y]?.[z]!==null&&grid[x]?.[y]?.[z]!==undefined){valid=false;break}
+    }
+    return{cells,valid,color:inv[selIdx].color,pid:selIdx};
+  }
+
+  // ── Place piece ───────────────────────────────────────────────
+  // BUG FIX: now called directly without dependence on dragMoved
+  function tryPlace(){
+    if(selIdx<0){setHint('① Selecciona primero una pieza del panel lateral.');return}
+    const g=getGhost();
+    if(!g){setHint('Pasa el mouse sobre las celdas del cubo para ver dónde encaja la pieza.');return}
+    if(!g.valid){
+      setHint('❌ No encaja aquí. Rota la pieza con ② o elige otra celda.','bad');return
+    }
+    // Start timer on first piece in reto mode
+    if(gameMode==='reto'&&!tmrInt&&placed.length===0)startTmr();
+    history.push({
+      grid:JSON.parse(JSON.stringify(grid)),
+      placed:placed.map(x=>({...x})),
+      inv:inv.map(p=>({placed:p.placed,cc:p.currentCells.map(c=>[...c])})),
+      score,selIdx
+    });
+    g.cells.forEach(([x,y,z])=>{grid[x][y][z]=g.pid;placed.push({x,y,z,color:g.color,pi:g.pid})});
+    inv[g.pid].placed=true;score+=inv[g.pid].cubos*100+80;selIdx=-1;
+    updAll();
+    const rem=inv.filter(p=>!p.placed).length;
+    setHint(rem>0?`✅ ¡Pieza colocada! Quedan ${rem} piezas.`:'✅ ¡Todas las piezas colocadas!','ok');
+    checkWin();
+  }
+
+  function checkWin(){
+    const tset=getTset();
+    const pset=new Set(placed.map(p=>`${p.x},${p.y},${p.z}`));
+    if([...tset].every(k=>pset.has(k))){
+      stopTmr();
+      const finalTime=stopwatchSecs;
+      document.getElementById('winPts').textContent=score+' PTS';
+      document.getElementById('winMsg').textContent=`¡Ensamblaste "${curFig.nm}" perfectamente!`;
+      if(gameMode==='reto'){
+        document.getElementById('winTime').textContent=`⏱ Tiempo: ${fmtTime(finalTime)}`;
+        document.getElementById('winTime').style.display='block';
+        document.getElementById('nameInputWrap').style.display='block';
+        // Store pending score for save
+        window._pendingLB={fig:curFig.id,figNm:curFig.nm,time:finalTime,score};
+      } else {
+        document.getElementById('winTime').style.display='none';
+        document.getElementById('nameInputWrap').style.display='none';
+      }
+      setTimeout(()=>document.getElementById('winOv').classList.add('show'),700);
+    }
+  }
+
+  function showFail(){
+    document.getElementById('failPts').textContent=score+' PTS';
+    document.getElementById('failOv').classList.add('show');
+  }
+
+  function undoLast(){
+    if(!history.length){setHint('No hay acciones para deshacer.');return}
+    const s=history.pop();
+    for(let x=0;x<GS;x++)for(let y=0;y<GS;y++)for(let z=0;z<GS;z++)grid[x][y][z]=s.grid[x][y][z];
+    placed=s.placed;s.inv.forEach((si,i)=>{inv[i].placed=si.placed;inv[i].currentCells=si.cc});
+    score=s.score;selIdx=s.selIdx;updAll();setHint('↩ Deshecho.');
+  }
+
+  function clearAll(){
+    stopTmr();history=[];initGrid();
+    inv.forEach((p,i)=>{p.placed=false;p.currentCells=PDEFS[i].cells.map(c=>[...c])});
+    selIdx=-1;score=0;hovCell=null;updAll();
+    setHint('🔄 Reiniciado. Elige una pieza y empieza a construir.');
+  }
+  window.resetGame=clearAll;
+
+  // ── UI helpers ───────────────────────────────────────────────
+  function setHint(t,type=''){
+    const b=document.getElementById('hint');
+    b.className='hint'+(type?' '+type:'');
+    b.innerHTML=`<strong>💡</strong>${t}`;
+  }
+  function updAll(){updScore();updProgress();updPal();updPrev()}
+  function updScore(){document.getElementById('scN').textContent=score}
+  function updProgress(){
+    const tot=curFig.cells.length,n=placed.length,pct=Math.min(100,Math.round(n/tot*100));
+    document.getElementById('pbF').style.width=pct+'%';
+    document.getElementById('pbL').textContent=n+' / '+tot;
+    document.getElementById('pbP').textContent=pct+'%';
+    const rem=inv.filter(p=>!p.placed).length;
+    document.getElementById('chipP').textContent=rem+' piezas';
+    const cs=document.getElementById('chipS');
+    cs.textContent=pct>=100?'¡Completado!':pct>50?'¡Buen avance!':'En progreso';
+    cs.className='chip'+(pct>=100?' ok':pct>50?' wn':'');
+  }
+  function updPal(){
+    const pal=document.getElementById('palGrid');pal.innerHTML='';
+    inv.forEach((p,i)=>{
+      const div=document.createElement('div');
+      div.className='pp'+(i===selIdx?' sel':'')+(p.placed?' done':'');
+      div.style.cssText=`--pc:${p.color}`;
+      const c=document.createElement('canvas');c.width=56;c.height=44;
+      const nm=document.createElement('div');nm.className='pp-nm';nm.textContent=p.placed?'✓'+p.id:p.id;
+      if(p.placed){const ck=document.createElement('span');ck.className='pp-chk';ck.textContent='✓';div.appendChild(ck)}
+      else{const b=document.createElement('span');b.className='pp-cnt';b.textContent=p.cubos;div.appendChild(b);div.onclick=()=>selPc(i)}
+      div.appendChild(c);div.appendChild(nm);pal.appendChild(div);
+      requestAnimationFrame(()=>drawPieceSmall(c,p,11));
+    });
+  }
+  function updPrev(){
+    const nm=document.getElementById('vpiNm');
+    if(selIdx<0){nm.style.color='var(--mut)';nm.textContent='Selecciona una pieza del panel ①';return}
+    nm.style.color=inv[selIdx].color;nm.textContent=inv[selIdx].nm+' · '+inv[selIdx].cubos+' cubos';
+  }
+
+  // ── RENDER ────────────────────────────────────────────────────
+  function getHov(mx,my){
+    const tset=getTset();
+    let best=null,bd=52;
+    curFig.cells.forEach(([x,y,z])=>{
+      if(grid[x]?.[y]?.[z]!==null)return;
+      const[px,py]=projCell(x,y,z);
+      const d=Math.hypot(px-mx,py-my);
+      if(d<bd){bd=d;best={x,y,z}}
+    });
+    return best;
+  }
+
+  function render(){
+    ctx.clearRect(0,0,W,H);
+    if(autoRot)camY+=.006;
+    const bg=ctx.createRadialGradient(W*.45,H*.45,0,W*.5,H*.5,Math.max(W,H)*.65);
+    bg.addColorStop(0,'#0A0A24');bg.addColorStop(1,'#040410');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+    const tset=getTset();
+    const ghost=selIdx>=0&&hovCell?getGhost():null;
+    const ghostOk=ghost&&ghost.valid;
+    const ghostSet=ghost?new Map(ghost.cells.map(([x,y,z])=>[`${x},${y},${z}`,ghost.valid])):new Map();
+    const pColor=selIdx>=0?inv[selIdx].color:'#00D9FF';
+
+    // Depth sort figure cells
+    const depts=curFig.cells.map(([x,y,z])=>{
+      const[,,dz]=projCell(x,y,z);return{x,y,z,depth:dz};
+    });
+    depts.sort((a,b)=>b.depth-a.depth);
+
+    // Draw figure cells
+    depts.forEach(({x,y,z})=>{
+      const[px,py]=projCell(x,y,z);
+      const key=`${x},${y},${z}`;
+      const placed_here=grid[x]?.[y]?.[z]!==null&&grid[x]?.[y]?.[z]!==undefined;
+      const isGhost=ghostSet.has(key);
+      if(placed_here){
+        const pidx=grid[x][y][z];
+        drawBlk(ctx,px,py,CELL*.72,PDEFS[pidx].color,.94,false);
+      } else if(isGhost){
+        const ok=ghostSet.get(key);
+        drawBlk(ctx,px,py,CELL*.72,ok?pColor:'#EF4444',.62,ok);
+      } else {
+        // Empty target cell — pulsing blue outline
+        const pulse=.08+.05*Math.sin(Date.now()*.003);
+        drawBlk(ctx,px,py,CELL*.72,'#00D9FF',pulse+.04,false);
+        // Bright dot in center
+        ctx.beginPath();ctx.arc(px,py,2.5,0,Math.PI*2);
+        ctx.fillStyle='rgba(0,217,255,.5)';ctx.fill();
+      }
+    });
+
+    // Ghost status text
+    if(ghost&&hovCell){
+      ctx.font='bold 12px Orbitron,sans-serif';ctx.textAlign='center';
+      ctx.fillStyle=ghostOk?'rgba(0,230,118,.9)':'rgba(239,68,68,.9)';
+      ctx.shadowColor=ghostOk?'#00E676':'#EF4444';ctx.shadowBlur=10;
+      ctx.fillText(ghostOk?'✓ Clic para colocar la pieza':'✗ No cabe aquí — rota o elige otra celda',W/2,H-32);
+      ctx.shadowBlur=0;
+    }
+
+    // HUD
+    ctx.font='10px Orbitron,sans-serif';ctx.fillStyle='rgba(0,217,255,.28)';ctx.textAlign='center';
+    ctx.fillText(`${curFig.nm} · ${placed.length}/${curFig.cells.length} · ${score} pts`,W/2,H-12);
+
+    requestAnimationFrame(render);
+  }
+
+  // ── EVENTS (BUG FIX) ─────────────────────────────────────────
+  // Uso 'mousedown' + 'mouseup' con threshold alto Y 'click' event separado
+  cv.addEventListener('mousedown',e=>{
+    // Only start tracking drag when LEFT button pressed
+    if(e.button!==0)return;
+    mouseDown=true;isDrag=false;dragDist=0;lmx=e.clientX;lmy=e.clientY;
+    cv.classList.remove('drag');
+  });
+
+  cv.addEventListener('mousemove',e=>{
+    const r=cv.getBoundingClientRect();
+    // Rotate camera ONLY while button is held
+    if(mouseDown){
+      const dx=e.clientX-lmx,dy=e.clientY-lmy;
+      dragDist+=Math.hypot(dx,dy);
+      if(dragDist>8){
+        isDrag=true;
+        cv.classList.add('drag');
+        camY+=dx*.006;camX+=dy*.006;
+        camX=Math.max(-.88,Math.min(.88,camX));
+      }
+      lmx=e.clientX;lmy=e.clientY;
+    }
+    // Ghost preview always follows mouse (no button needed)
+    hovCell=getHov(e.clientX-r.left,e.clientY-r.top);
+    if(selIdx>=0&&hovCell){
+      const g=getGhost();
+      if(g){
+        const h=document.getElementById('hint');
+        if(g.valid){h.className='hint ok';h.innerHTML='<strong>✅ ENCAJA</strong> — Haz clic para colocar la pieza aquí.'}
+        else{h.className='hint bad';h.innerHTML='<strong>❌ NO CABE</strong> — Rota la pieza ② o muévete a otra celda.'}
+      }
+    }
+  });
+
+  cv.addEventListener('mouseup',e=>{
+    if(e.button!==0)return;
+    cv.classList.remove('drag');
+    // Only place piece if it was a clean click (no significant drag)
+    if(mouseDown&&dragDist<=8){
+      const r=cv.getBoundingClientRect();
+      hovCell=getHov(e.clientX-r.left,e.clientY-r.top);
+      if(hovCell)tryPlace();
+      else if(selIdx>=0)setHint('Haz clic directamente sobre una celda brillante del cubo.');
+    }
+    mouseDown=false;isDrag=false;dragDist=0;
+  });
+
+  document.addEventListener('mouseup',()=>{
+    // Safety: release even if mouse leaves canvas
+    mouseDown=false;isDrag=false;cv.classList.remove('drag');
+  });
+
+  cv.addEventListener('mouseleave',()=>{hovCell=null;});
+  cv.addEventListener('wheel',e=>{camZ+=e.deltaY*-.0009;camZ=Math.max(.4,Math.min(2.5,camZ));e.preventDefault()},{passive:false});
+
+  // Touch support
+  let lt1x,lt1y,touchMoved=false,touchDist=0;
+  cv.addEventListener('touchstart',e=>{
+    lt1x=e.touches[0].clientX;lt1y=e.touches[0].clientY;touchMoved=false;touchDist=0;e.preventDefault();
+  },{passive:false});
+  cv.addEventListener('touchmove',e=>{
+    const dx=e.touches[0].clientX-lt1x,dy=e.touches[0].clientY-lt1y;
+    touchDist=Math.hypot(dx,dy);
+    if(touchDist>8){touchMoved=true;camY+=dx*.006;camX+=dy*.006;camX=Math.max(-.88,Math.min(.88,camX))}
+    lt1x=e.touches[0].clientX;lt1y=e.touches[0].clientY;e.preventDefault();
+  },{passive:false});
+  cv.addEventListener('touchend',e=>{
+    if(!touchMoved){
+      const r=cv.getBoundingClientRect();const t=e.changedTouches[0];
+      hovCell=getHov(t.clientX-r.left,t.clientY-r.top);
+      if(hovCell)tryPlace();
+    }
+    touchMoved=false;touchDist=0;e.preventDefault();
+  },{passive:false});
+
+  // Rotation buttons
+  document.getElementById('rXp').onclick=()=>rotPc('x',1);document.getElementById('rXn').onclick=()=>rotPc('x',-1);
+  document.getElementById('rYp').onclick=()=>rotPc('y',1);document.getElementById('rYn').onclick=()=>rotPc('y',-1);
+  document.getElementById('rZp').onclick=()=>rotPc('z',1);document.getElementById('rZn').onclick=()=>rotPc('z',-1);
+  document.getElementById('bRV').onclick=()=>{camX=.44;camY=-.52;camZ=1;autoRot=false;document.getElementById('bAR').textContent='⟳ Auto'};
+  document.getElementById('bAR').onclick=function(){autoRot=!autoRot;this.textContent=autoRot?'⏸ Detener':'⟳ Auto'};
+  document.getElementById('bCL').onclick=clearAll;
+  document.getElementById('bUD').onclick=undoLast;
+
+  initGrid();updPal();updProgress();updPrev();
+  resize();window.addEventListener('resize',resize);
+  render();
+})();
+
+// Init
+drawFigPrev(document.getElementById('tgtCanvas'),curFig,9);
+updFigActive();
+
+
+
+function fmtTime(secs){
+  const m=Math.floor(secs/60),s=secs%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+// ══════════════════════════════════════════════════════════════════
+//  LEADERBOARD — localStorage based, grouped by figure
+// ══════════════════════════════════════════════════════════════════
+const LB_KEY = 'cubosoma_lb_v2';
+
+function loadLB(){
+  try{ return JSON.parse(localStorage.getItem(LB_KEY)||'{}'); }
+  catch{ return {}; }
+}
+function saveLB(data){
+  try{ localStorage.setItem(LB_KEY, JSON.stringify(data)); }catch{}
+}
+
+function addLBEntry(figId, figNm, playerName, timeSecs, score){
+  const data = loadLB();
+  if(!data[figId]) data[figId] = {nm:figNm, entries:[]};
+  data[figId].entries.push({
+    name: playerName.trim().slice(0,20) || 'Anónimo',
+    time: timeSecs,
+    score,
+    date: new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'short'})
+  });
+  // Keep top 10 per figure, sorted by time
+  data[figId].entries.sort((a,b)=>a.time-b.time);
+  data[figId].entries = data[figId].entries.slice(0,10);
+  saveLB(data);
+}
+
+// Active tab in leaderboard
+let lbActiveFig = null;
+
+function renderLB(){
+  const data = loadLB();
+  const figs = Object.keys(data);
+  const tabsEl = document.getElementById('lbTabs');
+  const listEl = document.getElementById('lbList');
+
+  if(!figs.length){
+    tabsEl.innerHTML='';
+    listEl.innerHTML='<li class="lb-empty">Aún no hay tiempos registrados.<br>¡Juega en modo Competencia!</li>';
+    return;
+  }
+
+  // If no active tab set, use first
+  if(!lbActiveFig || !data[lbActiveFig]) lbActiveFig = figs[0];
+
+  // Render tabs
+  tabsEl.innerHTML = figs.map(fid=>`
+    <button class="lb-tab${fid===lbActiveFig?' act':''}" onclick="lbActiveFig='${fid}';renderLB()">
+      ${data[fid].nm}
+    </button>`).join('');
+
+  // Render entries for active tab
+  const entries = data[lbActiveFig]?.entries || [];
+  if(!entries.length){
+    listEl.innerHTML='<li class="lb-empty">No hay tiempos para esta figura.</li>';
+    return;
+  }
+
+  const medals = ['🥇','🥈','🥉'];
+  const rankCls = ['r1','r2','r3'];
+  listEl.innerHTML = entries.map((e,i)=>`
+    <li class="lb-item${i<3?' top'+(i+1):''}">
+      <span class="lb-rank ${i<3?rankCls[i]:'rn'}">${i+1}</span>
+      <span class="lb-medal">${medals[i]||'  '}</span>
+      <div class="lb-info">
+        <div class="lb-name">${escHtml(e.name)}</div>
+        <div class="lb-meta">${data[lbActiveFig].nm} · ${e.date} · ${e.score} pts</div>
+      </div>
+      <div class="lb-time">${fmtTimeLB(e.time)}</div>
+    </li>`).join('');
+}
+
+function fmtTimeLB(s){
+  const m=Math.floor(s/60),sec=s%60;
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+function escHtml(t){return t.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+function saveToLB(){
+  const pending = window._pendingLB;
+  if(!pending) return;
+  const name = document.getElementById('playerName').value.trim() || 'Anónimo';
+  addLBEntry(pending.fig, pending.figNm, name, pending.time, pending.score);
+  window._pendingLB = null;
+  document.getElementById('nameInputWrap').style.display='none';
+  document.getElementById('playerName').value='';
+  renderLB();
+  // Show confirmation
+  const btn = document.querySelector('#nameInputWrap + div button, .ov-btns button');
+  setHint('✅ ¡Tiempo guardado en la tabla! Puedes ver el ranking abajo.','ok');
+}
+
+function clearLB(){
+  if(confirm('¿Borrar toda la tabla de tiempos?')){
+    localStorage.removeItem(LB_KEY);
+    lbActiveFig=null;
+    renderLB();
+  }
+}
+
+function setHint(t,type=''){
+  const b=document.getElementById('hint');
+  if(b){b.className='hint'+(type?' '+type:'');b.innerHTML=`<strong>💡</strong>${t}`;}
+}
+
+// Init leaderboard on load
+document.addEventListener('DOMContentLoaded',()=>{ renderLB(); });
+window.addEventListener('load',()=>{ renderLB(); });
+
+</script>
+</body>
+</html>
