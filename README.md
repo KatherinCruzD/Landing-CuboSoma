@@ -1,21 +1,21 @@
-# 🧩 CuboSoma 3D
+# CuboSoma 3D
 
-## 📖 Descripción
+## Descripción
 
 CuboSoma 3D es una Landing Page interactiva que combina información educativa con un juego tridimensional basado en el rompecabezas clásico Cubo Soma. El proyecto permite a los usuarios conocer el origen del Cubo Soma, explorar sus piezas geométricas y resolver el desafío ensamblando correctamente las siete piezas para formar un cubo de 3 × 3 × 3.
 
-## 🎯 Tema seleccionado
+## Tema seleccionado
 
 Landing Page interactiva con un juego educativo en 3D sobre el rompecabezas **Cubo Soma**.
 
-## 🛠 Herramientas utilizadas
+## Herramientas utilizadas
 
 - HTML5
 - CSS3
 - JavaScript
 - Three.js (para el entorno 3D)
 
-## 🚀 Funcionalidad principal
+## Funcionalidad principal
 
 - Landing Page moderna e interactiva.
 - Visualización tridimensional del Cubo Soma.
@@ -23,10 +23,10 @@ Landing Page interactiva con un juego educativo en 3D sobre el rompecabezas **Cu
 - Ensamblaje del cubo mediante las siete piezas originales.
 - Experiencia educativa enfocada en el razonamiento espacial y la lógica.
 
-## 👩‍💻 Autor
+## Autor
 
 **Katherin Sofía Cruz Díaz**
 
-## 🌐 Proyecto publicado
+## Proyecto publicado
 
 🔗 [https://TU-ENLACE-DE-RENDER.onrender.com](https://landing-cubosoma.onrender.com)
